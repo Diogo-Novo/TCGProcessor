@@ -21,8 +21,7 @@ namespace TCGProcessor.Middleware
         if (context.Request.Path.StartsWithSegments("/health") ||
             context.Request.Path.StartsWithSegments("/ping") ||
             context.Request.Path.StartsWithSegments("/swagger") ||
-            context.Request.Path.StartsWithSegments("/index.html") ||
-            context.Request.Path.StartsWithSegments("/")
+            context.Request.Path.StartsWithSegments("/index.html")
             )
         {
             await _next(context);

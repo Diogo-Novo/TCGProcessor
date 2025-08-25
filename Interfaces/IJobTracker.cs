@@ -8,7 +8,7 @@ namespace TCGProcessor.Interfaces
 {
     public interface IJobTracker
     {
-        void StartJob(string jobId, string userId);
+        void StartJob(string jobId);
         void UpdateProgress(string jobId, int progress, string status);
         void CompleteJob(string jobId, ProcessingResult result);
         void FailJob(string jobId, string error);

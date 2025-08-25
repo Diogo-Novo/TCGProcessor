@@ -12,12 +12,11 @@ namespace TCGProcessor.Services
     {
         private readonly ConcurrentDictionary<string, JobInfo> _jobs = new();
 
-        public void StartJob(string jobId, string userId)
+        public void StartJob(string jobId)
         {
             _jobs[jobId] = new JobInfo
             {
                 JobId = jobId,
-                UserId = userId,
                 Status = "Started",
                 StartTime = DateTime.UtcNow
             };

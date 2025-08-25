@@ -8,7 +8,6 @@ namespace TCGProcessor.Models
     public class JobInfo
     {
         public string JobId { get; set; }
-        public string UserId { get; set; }
         public string Status { get; set; }
         public string Message { get; set; }
         public int Progress { get; set; }

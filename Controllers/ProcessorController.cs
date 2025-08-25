@@ -8,6 +8,7 @@ using TCGProcessor.Models;
 using TCGProcessor.Services;
 using Microsoft.AspNetCore.SignalR;
 using TCGProcessor.Interfaces;
+using TCGProcessor.Repositories;
 
 
 namespace TCGProcessor.Controllers
@@ -22,22 +23,22 @@ namespace TCGProcessor.Controllers
         private readonly IJsonProcessingService _processingService;
         private readonly ILogger<ProcessorController> _logger;
         private readonly IHubContext<ProcessingHub> _hubContext;
-        private OsMgxPricingSystemContext _pricingSystemContext;
+        private PricingSheetRepository _pricingSystemRepository;
         #endregion
         public ProcessorController(
             ILogger<ProcessorController> logger,
             IJobTracker jobTracker,
-            OsMgxPricingSystemContext pricingSystemContext)
+            PricingSheetRepository pricingSystemRepository)
         {
             _logger = logger;
             _jobTracker = jobTracker;
-            _pricingSystemContext = pricingSystemContext;
+            _pricingSystemRepository = pricingSystemRepository;
         }
 
         [HttpGet("pricing")]
         public IActionResult GetPricingData()
         {
-            var items = _pricingSystemContext.PsTemporaryPricingItems.Take(10).ToList();
+            var items = _pricingSystemRepository.GetItems();
             return Ok(items);
         }
 
@@ -46,11 +47,16 @@ namespace TCGProcessor.Controllers
         {
             try
             {
-                var userId = User.FindFirst("user_id")?.Value ?? User.Identity?.Name ?? "anonymous";
+                //var userId = User.FindFirst("user_id")?.Value ?? User.Identity?.Name ?? "anonymous";
+                bool pricingSheetExists = await _pricingSystemRepository.PricingSheetExists(request.PricingSheetId);
+                if (!pricingSheetExists)
+                {
+                    return BadRequest($"Pricing sheet with ID {request.PricingSheetId} does not exist.");
+                }
 
                 // Validate the request
-                if (request.Cards == null || !request.Cards.Any())
-                    return BadRequest("No cards provided");
+                    if (request.Cards == null || !request.Cards.Any())
+                        return BadRequest("No cards provided");
 
 
                 // Validate card data
@@ -67,21 +73,21 @@ namespace TCGProcessor.Controllers
                 var processingRequest = new JsonProcessingRequest
                 {
                     JobId = jobId,
-                    UserId = userId,
                     Cards = request.Cards,
                     Config = request.Config,
                     EuroToGbpRate = request.EuroToGbpRate,
-                    UsdToGbpRate = request.UsdToGbpRate
+                    UsdToGbpRate = request.UsdToGbpRate,
+                    PricingSheetId = request.PricingSheetId
                 };
 
                 // Start tracking the job
-                _jobTracker.StartJob(jobId, userId);
+                _jobTracker.StartJob(jobId);
 
                 // Start background processing
                 _ = Task.Run(() => ProcessManaBoxCardsAsync(processingRequest));
 
                 _logger.LogInformation("Started processing job {JobId} for user {UserId} with {CardCount} cards",
-                    jobId, userId, request.Cards.Count);
+                    jobId, request.Cards.Count);
 
                  return Ok(new { 
                     JobId = jobId, 
@@ -131,7 +137,7 @@ namespace TCGProcessor.Controllers
                     Status = "Generating pricing sheet..."
                 });
 
-                //var pricingSheet = await _processingService.GenerateManaBoxPricingSheetItems(enrichedCards, request.Config);
+                var pricingSheet = await _processingService.GenerateManaBoxPricingSheetItems(enrichedCards, request);
 
                 // Step 3: Save results (optional)
                 _jobTracker.UpdateProgress(request.JobId, 95, "Finalizing results...");

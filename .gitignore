@@ -1,0 +1,50 @@
+## .NET ##
+**/bin/
+**/obj/
+*.user
+*.usr
+*.suo
+*.cache
+*.vs/
+.vscode/
+
+# Build results
+[Dd]ebug/
+[Bb]in/
+[Oo]bj/
+
+# User-specific files
+*.userprefs
+
+# Sensitive data files - CRITICAL!
+appsettings.Development.json
+appsettings.Local.json
+appsettings.Production.json
+appsettings.json
+secrets.json
+*.config
+*.env
+.env.local
+.env.*.local
+
+# NuGet packages
+**/packages/*
+*.nupkg
+.nuget/
+
+# Docker
+docker-compose.override.yml
+
+# IDE files
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

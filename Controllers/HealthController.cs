@@ -11,6 +11,13 @@ namespace TCGProcessor.Controllers
     [Route("[controller]")]
     public class HealthController : ControllerBase
     {
+        private readonly IConfiguration Configuration;
+
+        public HealthController(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
         [HttpGet]
         [AllowAnonymous] // If using filter approach, add this attribute
         public IActionResult Get()
@@ -21,6 +28,21 @@ namespace TCGProcessor.Controllers
                 Timestamp = DateTime.UtcNow,
                 Version = "1.0.0"
             });
+        }
+
+        [HttpGet("debug-config")]
+        public IActionResult DebugConfig()
+        {
+            var configValues = new
+            {
+                ApiKey = Configuration["API:Key"],
+                PricingConnection = Configuration.GetConnectionString("OS-MGX-PricingSystem"),
+                ProcessorConnection = Configuration.GetConnectionString("OS-MGX-Processor"),
+                CorsOrigins = Configuration["Cors:AllowedOrigins"],
+                AllEnvironmentVariables = Environment.GetEnvironmentVariables()
+            };
+
+            return Ok(configValues);
         }
     }
 }

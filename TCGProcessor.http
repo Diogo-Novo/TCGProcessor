@@ -1,0 +1,6 @@
+@TCGProcessor_HostAddress = http://localhost:5020
+
+GET {{TCGProcessor_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

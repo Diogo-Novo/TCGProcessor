@@ -26,6 +26,7 @@ secrets.json
 *.env
 .env.local
 .env.*.local
+Properties/launchSettings.json
 
 # NuGet packages
 **/packages/*
@@ -48,3 +49,4 @@ docker-compose.override.yml
 .Trashes
 ehthumbs.db
 Thumbs.db
+

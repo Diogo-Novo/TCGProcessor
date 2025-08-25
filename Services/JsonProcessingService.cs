@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using TCGProcessor.Interfaces;
 using TCGProcessor.Models;
+using TCGProcessor.Repositories;
 
 namespace TCGProcessor.Services
 {
@@ -12,15 +13,17 @@ namespace TCGProcessor.Services
         private readonly IScryfallService _scryfallService;
         private readonly IWebHostEnvironment _environment;
         private readonly ILogger<JsonProcessingService> _logger;
-
+        private readonly PricingSheetRepository _pricingSheetRepository;
         public JsonProcessingService(
-            IScryfallService scryfallService, 
+            IScryfallService scryfallService,
             IWebHostEnvironment environment,
-            ILogger<JsonProcessingService> logger)
+            ILogger<JsonProcessingService> logger,
+            PricingSheetRepository pricingSheetRepository)
         {
             _scryfallService = scryfallService;
             _environment = environment;
             _logger = logger;
+            _pricingSheetRepository = pricingSheetRepository;
         }
 
         public async Task<List<EnrichedMTGCard>> EnrichWithScryfallData(List<ManaBoxCardCsvRecord> cards, Func<ProgressInfo, Task> progressCallback)
@@ -65,16 +68,133 @@ namespace TCGProcessor.Services
             return enrichedCards;
         }
 
-        public async Task<PsPricingSheet> GeneratePricingSheet(List<EnrichedMTGCard> cards, ManaBoxImportConfig config)
+        public async Task<PsPricingSheet> GenerateManaBoxPricingSheetItems(List<EnrichedMTGCard> enrichedCards, JsonProcessingRequest request)
         {
-            throw new NotImplementedException();
+            int totalCards = enrichedCards.Count;
+            int processedCards = 0;
+            int errorCount = 0;
+            PsPricingSheet pricingSheet = _pricingSheetRepository.GetPricingSheetById(request.PricingSheetId);
+            List<PsPricingSheetItem> pricingItems = new();
+
+            foreach (var card in enrichedCards)
+            {
+                #region Skip Logic
+                if (card.OriginalCard.Rarity == "common" && !request.Config.IncludeCommon)
+                {
+                    processedCards++;
+                    continue; // Skip common cards if not included
+                }
+                if (card.OriginalCard.Rarity == "uncommon" && !request.Config.IncludeUncommon)
+                {
+                    processedCards++;
+                    continue; // Skip uncommon cards if not included
+                }
+                if (card.OriginalCard.Rarity == "rare" && !request.Config.IncludeRare)
+                {
+                    processedCards++;
+                    continue; // Skip rare cards if not included
+                }
+                if (card.OriginalCard.Rarity == "mythic" && !request.Config.IncludeMythic)
+                {
+                    processedCards++;
+                    continue; // Skip mythic cards if not included
+                }
+                #endregion
+
+                //Calculate pricing based on Scryfall data and config
+                decimal finalCalculatedPriceGbp = 0;
+
+                try
+                {
+                    // Placeholder for actual pricing logic
+                    decimal calculatedPriceGbpFromUsd = 0;
+                    decimal calculatedPriceGbpFromEur = 0;
+
+                    switch (card.OriginalCard.Finish)
+                    {
+                        case CardFinish.Etched:
+                            finalCalculatedPriceGbp = (card.ScryfallData?.Prices.UsdEtched ?? 0) * request.UsdToGbpRate;
+                            break;
+                        case CardFinish.Foil:
+                            calculatedPriceGbpFromUsd = (card.ScryfallData?.Prices.UsdFoil ?? 0) * request.UsdToGbpRate;
+                            calculatedPriceGbpFromEur = (card.ScryfallData?.Prices.EurFoil ?? 0) * request.EuroToGbpRate;
+                            finalCalculatedPriceGbp = CalculateAveragePrice(calculatedPriceGbpFromUsd, calculatedPriceGbpFromEur);
+                            break;
+
+                        case CardFinish.Normal:
+                        default:
+                            calculatedPriceGbpFromUsd = (card.ScryfallData?.Prices.Usd ?? 0) * request.UsdToGbpRate;
+                            calculatedPriceGbpFromEur = (card.ScryfallData?.Prices.Eur ?? 0) * request.EuroToGbpRate;
+                            finalCalculatedPriceGbp = CalculateAveragePrice(calculatedPriceGbpFromUsd, calculatedPriceGbpFromEur);
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error calculating pricing for card {CardName}", card.OriginalCard.Name);
+                    errorCount++;
+                    processedCards++;
+                    continue;
+                }
+
+                if (finalCalculatedPriceGbp < request.Config.MinPrice)
+                {
+                    // Skip cards with no price
+                    processedCards++;
+                    continue;
+                }
+
+                for (int i = 0; i < card.OriginalCard.Quantity; i++)
+                {
+                    pricingItems.Add(new PsPricingSheetItem
+                    {
+                        PsiCreatedBy = pricingSheet.PsCreatedBy,
+                        PsiSaleValue = finalCalculatedPriceGbp,
+                        PsiItemName = $"{card.OriginalCard.Name.ToUpper()} ({card.OriginalCard.CollectorNumber} - {card.OriginalCard.SetCode.ToUpper()}) {card.OriginalCard.Finish.ToString().ToUpper()}",
+                        PsiCashValue = finalCalculatedPriceGbp * 0.6m,
+                        PsiTradeValue = finalCalculatedPriceGbp * 0.6m,
+                        PsiPricingSheet = request.PricingSheetId,
+                    });
+                }
+
+                processedCards++; // Increment processed cards after successful processing
+            }
+
+            // Update pricing sheet with calculated values
+            pricingSheet.PsItemCount = pricingItems.Count;
+            pricingSheet.PsTotalSellValue = pricingItems.Sum(i => i.PsiSaleValue);
+            pricingSheet.PsTotalCashValue = pricingItems.Sum(i => i.PsiCashValue);
+            pricingSheet.PsTotalTradeValue = pricingItems.Sum(i => i.PsiTradeValue);
+            pricingSheet.PsLastUpdated = DateTime.UtcNow;
+
+
+            // Update the pricing sheet in the database
+            await _pricingSheetRepository.UpdatePricingSheetAsync(pricingSheet);
+
+            // Log completion statistics
+            _logger.LogInformation("Pricing sheet generation completed. Processed: {ProcessedCards}, Errors: {ErrorCount}, Total Items: {TotalItems}",
+                processedCards, errorCount, pricingItems.Count);
+
+            return pricingSheet;
         }
 
-        public async Task<string> SavePricingSheet(PsPricingSheet sheet, string jobId, string format)
+        // Helper method for calculating average price
+        private decimal CalculateAveragePrice(decimal usdPrice, decimal eurPrice)
         {
-            throw new NotImplementedException();
+            if (usdPrice > 0 && eurPrice > 0)
+            {
+                return (usdPrice + eurPrice) / 2;
+            }
+            else if (usdPrice > 0)
+            {
+                return usdPrice;
+            }
+            else if (eurPrice > 0)
+            {
+                return eurPrice;
+            }
+            return 0;
         }
-
         public async Task<ValidationResult> ValidateCards(List<ManaBoxCardCsvRecord> cards)
         {
             var result = new ValidationResult { IsValid = true };

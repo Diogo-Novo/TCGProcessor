@@ -30,19 +30,19 @@ namespace TCGProcessor.Controllers
             });
         }
 
-        [HttpGet("debug-config")]
-        public IActionResult DebugConfig()
-        {
-            var configValues = new
-            {
-                ApiKey = Configuration["API:Key"],
-                PricingConnection = Configuration.GetConnectionString("OS-MGX-PricingSystem"),
-                ProcessorConnection = Configuration.GetConnectionString("OS-MGX-Processor"),
-                CorsOrigins = Configuration["Cors:AllowedOrigins"],
-                AllEnvironmentVariables = Environment.GetEnvironmentVariables()
-            };
+        // [HttpGet("debug-config")]
+        // public IActionResult DebugConfig()
+        // {
+        //     var configValues = new
+        //     {
+        //         ApiKey = Configuration["API:Key"],
+        //         PricingConnection = Configuration.GetConnectionString("OS-MGX-PricingSystem"),
+        //         ProcessorConnection = Configuration.GetConnectionString("OS-MGX-Processor"),
+        //         CorsOrigins = Configuration["Cors:AllowedOrigins"],
+        //         AllEnvironmentVariables = Environment.GetEnvironmentVariables()
+        //     };
 
-            return Ok(configValues);
-        }
+        //     return Ok(configValues);
+        // }
     }
 }

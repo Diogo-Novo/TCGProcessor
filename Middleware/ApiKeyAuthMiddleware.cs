@@ -19,7 +19,11 @@ namespace TCGProcessor.Middleware
     {
         // Skip authentication for health checks or specific paths
         if (context.Request.Path.StartsWithSegments("/health") ||
-            context.Request.Path.StartsWithSegments("/ping"))
+            context.Request.Path.StartsWithSegments("/ping") ||
+            context.Request.Path.StartsWithSegments("/swagger") ||
+            context.Request.Path.StartsWithSegments("/index.html") ||
+            context.Request.Path.StartsWithSegments("/")
+            )
         {
             await _next(context);
             return;

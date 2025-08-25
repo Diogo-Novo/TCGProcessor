@@ -20,7 +20,7 @@
 appsettings.Development.json
 appsettings.Local.json
 appsettings.Production.json
-appsettings.json
+
 secrets.json
 *.config
 *.env

@@ -20,12 +20,24 @@ builder.Services.AddControllers();
 builder.Services.AddSignalR();
 
 #region CORS Configuration
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() 
-    ?? builder.Configuration["Cors:AllowedOrigins"]?.Split(',', StringSplitOptions.RemoveEmptyEntries)
-    ?? new[] { "*" };
+var corsOrigins = Environment.GetEnvironmentVariable("CORS__ALLOWED_ORIGINS") 
+    ?? builder.Configuration["Cors:AllowedOrigins"];
 
-// Clean up origins (remove trailing slashes and whitespace)
-allowedOrigins = allowedOrigins.Select(origin => origin.Trim().TrimEnd('/')).ToArray();
+string[] allowedOrigins;
+if (string.IsNullOrEmpty(corsOrigins))
+{
+    allowedOrigins = new[] { "*" }; // Fallback
+}
+else
+{
+    allowedOrigins = corsOrigins
+        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+        .Select(origin => origin.Trim().TrimEnd('/'))
+        .ToArray();
+}
+
+// Debug logging to see what origins are configured
+Console.WriteLine($"Configured CORS origins: {string.Join(", ", allowedOrigins)}");
 
 builder.Services.AddCors(options =>
 {

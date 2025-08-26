@@ -52,6 +52,8 @@ namespace TCGProcessor.Services
                     await progressCallback(
                         new ProgressInfo { Current = processed, Total = cards.Count }
                     );
+                    _logger.LogInformation("Progress callback executed: {Current}/{Total}", processed, cards.Count);
+
                 }
                 catch (Exception ex)
                 {

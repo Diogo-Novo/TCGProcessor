@@ -8,8 +8,14 @@ namespace TCGProcessor.Interfaces
 {
     public interface IJsonProcessingService
     {
-        Task<List<EnrichedMTGCard>> EnrichWithScryfallData(List<ManaBoxCardCsvRecord> cards, Func<ProgressInfo, Task> progressCallback);
+        Task<List<EnrichedMTGCard>> EnrichWithScryfallData(
+            List<ManaBoxCardCsvRecord> cards,
+            Func<ProgressInfo, Task> progressCallback
+        );
         Task<ValidationResult> ValidateCards(List<ManaBoxCardCsvRecord> cards);
-        Task<PsPricingSheet> GenerateManaBoxPricingSheetItems(List<EnrichedMTGCard> enrichedCards, JsonProcessingRequest request);
+        Task<PsPricingSheet> GenerateManaBoxPricingSheetItems(
+            List<EnrichedMTGCard> enrichedCards,
+            JsonProcessingRequest request
+        );
     }
 }

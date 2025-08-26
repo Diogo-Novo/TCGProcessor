@@ -16,7 +16,7 @@ namespace TCGProcessor.Models
 
         public decimal EuroToGbpRate { get; set; } = 0.85m;
         public decimal UsdToGbpRate { get; set; } = 0.79m;
-        
+
         public int PricingSheetId { get; set; }
     }
 }

@@ -10,14 +10,10 @@ namespace TCGProcessor.Data
 {
     public class OSMGXProcessorDbContext : DbContext
     {
-        public OSMGXProcessorDbContext()
-        {
-        }
+        public OSMGXProcessorDbContext() { }
 
         public OSMGXProcessorDbContext(DbContextOptions<OSMGXProcessorDbContext> options)
-            : base(options)
-        {
-        }
+            : base(options) { }
 
         public virtual DbSet<CachedScryfallCard> ScryfallCache { get; set; }
 
@@ -29,32 +25,42 @@ namespace TCGProcessor.Data
             {
                 // Configure primary key (Guid)
                 entity.HasKey(e => e.Id);
-                 entity.HasIndex(e => e.ScryfallId)
-              .IsUnique(); // Assuming one cache entry per Scryfall ID
+                entity.HasIndex(e => e.ScryfallId).IsUnique(); // Assuming one cache entry per Scryfall ID
 
-        entity.Property(e => e.ScryfallId)
-              .IsRequired();
+                entity.Property(e => e.ScryfallId).IsRequired();
                 // Configure CardData to be stored as JSON string
-                entity.Property(e => e.CardData)
+                entity
+                    .Property(e => e.CardData)
                     .HasConversion(
-                        v => v == null ? null : System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions)null),
-                        v => v == null ? null : System.Text.Json.JsonSerializer.Deserialize<Card>(v, (System.Text.Json.JsonSerializerOptions)null))
+                        v =>
+                            v == null
+                                ? null
+                                : System.Text.Json.JsonSerializer.Serialize(
+                                    v,
+                                    (System.Text.Json.JsonSerializerOptions)null
+                                ),
+                        v =>
+                            v == null
+                                ? null
+                                : System.Text.Json.JsonSerializer.Deserialize<Card>(
+                                    v,
+                                    (System.Text.Json.JsonSerializerOptions)null
+                                )
+                    )
                     .HasColumnType("JSON"); // MySQL JSON column type
 
                 // Configure CachedAt property
-                entity.Property(e => e.CachedAt)
+                entity
+                    .Property(e => e.CachedAt)
                     .IsRequired()
                     .HasDefaultValueSql("CURRENT_TIMESTAMP")
                     .HasColumnType("TIMESTAMP");
 
                 // Configure IsFound property
-                entity.Property(e => e.IsFound)
-                    .IsRequired()
-                    .HasDefaultValue(false);
+                entity.Property(e => e.IsFound).IsRequired().HasDefaultValue(false);
 
                 // Configure Error property (nullable string)
-                entity.Property(e => e.Error)
-                    .HasMaxLength(1000); // Adjust length as needed
+                entity.Property(e => e.Error).HasMaxLength(1000); // Adjust length as needed
 
                 // Add index on CachedAt for cache expiration queries
                 entity.HasIndex(e => e.CachedAt);

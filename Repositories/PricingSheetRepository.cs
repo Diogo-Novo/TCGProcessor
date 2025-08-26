@@ -1,6 +1,6 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Scryfall.API.Models;
-using System.Text.Json;
 using TCGProcessor.Data;
 using TCGProcessor.Models;
 using TCGProcessor.Models.Cache;
@@ -28,18 +28,19 @@ namespace TCGProcessor.Repositories
 
         internal PsPricingSheet GetPricingSheetById(int pricingSheetId)
         {
-            return _context.PsPricingSheets
-                .Include(ps => ps.PsPricingSheetItems)
+            return _context
+                .PsPricingSheets.Include(ps => ps.PsPricingSheetItems)
                 .FirstOrDefault(ps => ps.PsId == pricingSheetId);
         }
-        public async Task UpdatePricingSheetAsync(PsPricingSheet pricingSheet)
-{
-    if (pricingSheet == null)
-        throw new ArgumentNullException(nameof(pricingSheet));
 
-    // If the entity is already being tracked, EF will detect changes automatically
-    _context.PsPricingSheets.Update(pricingSheet);
-    await _context.SaveChangesAsync();
-}
+        public async Task UpdatePricingSheetAsync(PsPricingSheet pricingSheet)
+        {
+            if (pricingSheet == null)
+                throw new ArgumentNullException(nameof(pricingSheet));
+
+            // If the entity is already being tracked, EF will detect changes automatically
+            _context.PsPricingSheets.Update(pricingSheet);
+            await _context.SaveChangesAsync();
+        }
     }
 }

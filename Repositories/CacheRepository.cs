@@ -1,6 +1,6 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Scryfall.API.Models;
-using System.Text.Json;
 using TCGProcessor.Data;
 using TCGProcessor.Models.Cache;
 
@@ -22,14 +22,14 @@ namespace TCGProcessor.Repositories
         /// </summary>
         public async Task<(bool found, Card? card)> GetCachedCardAsync(Guid cardId)
         {
-            var cachedCard = await _context.ScryfallCache
-                .AsNoTracking()
+            var cachedCard = await _context
+                .ScryfallCache.AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == cardId);
 
             if (cachedCard == null || cachedCard.IsExpired())
                 return (false, null);
 
-            if (cachedCard.IsFound && cachedCard!=null)
+            if (cachedCard.IsFound && cachedCard != null)
             {
                 var card = cachedCard.CardData;
                 return (true, card);
@@ -41,7 +41,12 @@ namespace TCGProcessor.Repositories
         /// <summary>
         /// Save or update a cached card.
         /// </summary>
-        public async Task SaveCachedCardAsync(Guid cardId, Card? card, bool isFound, string? error = null)
+        public async Task SaveCachedCardAsync(
+            Guid cardId,
+            Card? card,
+            bool isFound,
+            string? error = null
+        )
         {
             var cachedCard = new CachedScryfallCard
             {

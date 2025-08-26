@@ -22,12 +22,14 @@ namespace TCGProcessor.Controllers
         [AllowAnonymous] // If using filter approach, add this attribute
         public IActionResult Get()
         {
-            return Ok(new
-            {
-                Status = "Healthy",
-                Timestamp = DateTime.UtcNow,
-                Version = "1.0.0"
-            });
+            return Ok(
+                new
+                {
+                    Status = "Healthy",
+                    Timestamp = DateTime.UtcNow,
+                    Version = "1.0.0"
+                }
+            );
         }
 
         // [HttpGet("debug-config")]

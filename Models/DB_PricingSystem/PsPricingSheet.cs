@@ -33,7 +33,8 @@ public partial class PsPricingSheet
 
     public string? PsQuickAccessReference { get; set; }
 
-    public virtual ICollection<PsPricingSheetItem> PsPricingSheetItems { get; set; } = new List<PsPricingSheetItem>();
+    public virtual ICollection<PsPricingSheetItem> PsPricingSheetItems { get; set; } =
+        new List<PsPricingSheetItem>();
 
     public virtual PsPricingSheetStatus? PsSheetStatusNavigation { get; set; }
 }

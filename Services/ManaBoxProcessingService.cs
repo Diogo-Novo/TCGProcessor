@@ -76,40 +76,44 @@ namespace TCGProcessor.Services
                             request.Cards,
                             async progress =>
                             {
-                                var progressPercent = 10 + (progress.Percentage * 0.7); // 10% to 80%
-                                var status =
-                                    $"Processing card {progress.Current} of {progress.Total}";
+                                try
+                                {
+                                    var progressPercent = 10 + (progress.Percentage * 0.7);
+                                    var status =
+                                        $"Processing card {progress.Current} of {progress.Total}";
 
-                                _logger.LogDebug(
-                                    "Progress update: {Progress}% - {Status}",
-                                    progressPercent,
-                                    status
-                                );
-
-                                jobTracker.UpdateProgress(
-                                    request.JobId,
-                                    (int)progressPercent,
-                                    status
-                                );
-
-                                await hubContext
-                                    .Clients.Group(userGroup)
-                                    .SendAsync(
-                                        "ProgressUpdate",
-                                        new
-                                        {
-                                            JobId = request.JobId,
-                                            Progress = progressPercent,
-                                            Status = status,
-                                            CurrentPhase = "scryfall_enrichment",
-                                            ProcessedItems = progress.Current,
-                                            TotalItems = progress.Total
-                                        },
-                                        stoppingToken
+                                    _logger.LogInformation(
+                                        "Sending progress: {Progress}% to group job_{JobId}",
+                                        progressPercent,
+                                        request.JobId
                                     );
+
+                                    await hubContext
+                                        .Clients.Group(userGroup)
+                                        .SendAsync(
+                                            "ProgressUpdate",
+                                            new
+                                            {
+                                                JobId = request.JobId,
+                                                Progress = progressPercent,
+                                                Status = status,
+                                                ProcessedItems = progress.Current,
+                                                TotalItems = progress.Total
+                                            }
+                                        );
+
+                                    _logger.LogInformation("Progress update sent successfully");
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogError(
+                                        ex,
+                                        "Failed to send progress update for job {JobId}",
+                                        request.JobId
+                                    );
+                                }
                             }
                         );
-
                         _logger.LogInformation(
                             "Enrichment completed for job {JobId}",
                             request.JobId
@@ -195,7 +199,10 @@ namespace TCGProcessor.Services
                                             c.ScryfallData == null
                                         ),
                                         ProcessingTimeMs = (
-                                            (jobTracker.GetJobStatus(request.JobId)?.StartTime ?? DateTime.UtcNow) - DateTime.UtcNow
+                                            (
+                                                jobTracker.GetJobStatus(request.JobId)?.StartTime
+                                                ?? DateTime.UtcNow
+                                            ) - DateTime.UtcNow
                                         ).TotalMilliseconds
                                     },
                                     Results = new

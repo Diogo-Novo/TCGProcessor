@@ -14,11 +14,13 @@ namespace TCGProcessor.Services
         private readonly IWebHostEnvironment _environment;
         private readonly ILogger<JsonProcessingService> _logger;
         private readonly PricingSheetRepository _pricingSheetRepository;
+
         public JsonProcessingService(
             IScryfallService scryfallService,
             IWebHostEnvironment environment,
             ILogger<JsonProcessingService> logger,
-            PricingSheetRepository pricingSheetRepository)
+            PricingSheetRepository pricingSheetRepository
+        )
         {
             _scryfallService = scryfallService;
             _environment = environment;
@@ -26,7 +28,10 @@ namespace TCGProcessor.Services
             _pricingSheetRepository = pricingSheetRepository;
         }
 
-        public async Task<List<EnrichedMTGCard>> EnrichWithScryfallData(List<ManaBoxCardCsvRecord> cards, Func<ProgressInfo, Task> progressCallback)
+        public async Task<List<EnrichedMTGCard>> EnrichWithScryfallData(
+            List<ManaBoxCardCsvRecord> cards,
+            Func<ProgressInfo, Task> progressCallback
+        )
         {
             var enrichedCards = new List<EnrichedMTGCard>();
             var processed = 0;
@@ -39,41 +44,53 @@ namespace TCGProcessor.Services
                 {
                     var scryfallData = await _scryfallService.GetCardById(card.ScryfallId);
 
-                    enrichedCards.Add(new EnrichedMTGCard
-                    {
-                        OriginalCard = card,
-                        ScryfallData = scryfallData
-                    });
+                    enrichedCards.Add(
+                        new EnrichedMTGCard { OriginalCard = card, ScryfallData = scryfallData }
+                    );
 
                     processed++;
-                    await progressCallback(new ProgressInfo { Current = processed, Total = cards.Count });
+                    await progressCallback(
+                        new ProgressInfo { Current = processed, Total = cards.Count }
+                    );
                 }
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Error processing card {CardName}", card.Name);
 
-                    enrichedCards.Add(new EnrichedMTGCard
-                    {
-                        OriginalCard = card,
-                        ScryfallData = null,
-                        Error = ex.Message
-                    });
+                    enrichedCards.Add(
+                        new EnrichedMTGCard
+                        {
+                            OriginalCard = card,
+                            ScryfallData = null,
+                            Error = ex.Message
+                        }
+                    );
 
                     processed++;
-                    await progressCallback(new ProgressInfo { Current = processed, Total = cards.Count });
+                    await progressCallback(
+                        new ProgressInfo { Current = processed, Total = cards.Count }
+                    );
                 }
             }
 
-            _logger.LogInformation("Completed enrichment. {ProcessedCount} cards processed", processed);
+            _logger.LogInformation(
+                "Completed enrichment. {ProcessedCount} cards processed",
+                processed
+            );
             return enrichedCards;
         }
 
-        public async Task<PsPricingSheet> GenerateManaBoxPricingSheetItems(List<EnrichedMTGCard> enrichedCards, JsonProcessingRequest request)
+        public async Task<PsPricingSheet> GenerateManaBoxPricingSheetItems(
+            List<EnrichedMTGCard> enrichedCards,
+            JsonProcessingRequest request
+        )
         {
             int totalCards = enrichedCards.Count;
             int processedCards = 0;
             int errorCount = 0;
-            PsPricingSheet pricingSheet = _pricingSheetRepository.GetPricingSheetById(request.PricingSheetId);
+            PsPricingSheet pricingSheet = _pricingSheetRepository.GetPricingSheetById(
+                request.PricingSheetId
+            );
             List<PsPricingSheetItem> pricingItems = new();
 
             foreach (var card in enrichedCards)
@@ -113,25 +130,40 @@ namespace TCGProcessor.Services
                     switch (card.OriginalCard.Finish)
                     {
                         case CardFinish.Etched:
-                            finalCalculatedPriceGbp = (card.ScryfallData?.Prices.UsdEtched ?? 0) * request.UsdToGbpRate;
+                            finalCalculatedPriceGbp =
+                                (card.ScryfallData?.Prices.UsdEtched ?? 0) * request.UsdToGbpRate;
                             break;
                         case CardFinish.Foil:
-                            calculatedPriceGbpFromUsd = (card.ScryfallData?.Prices.UsdFoil ?? 0) * request.UsdToGbpRate;
-                            calculatedPriceGbpFromEur = (card.ScryfallData?.Prices.EurFoil ?? 0) * request.EuroToGbpRate;
-                            finalCalculatedPriceGbp = CalculateAveragePrice(calculatedPriceGbpFromUsd, calculatedPriceGbpFromEur);
+                            calculatedPriceGbpFromUsd =
+                                (card.ScryfallData?.Prices.UsdFoil ?? 0) * request.UsdToGbpRate;
+                            calculatedPriceGbpFromEur =
+                                (card.ScryfallData?.Prices.EurFoil ?? 0) * request.EuroToGbpRate;
+                            finalCalculatedPriceGbp = CalculateAveragePrice(
+                                calculatedPriceGbpFromUsd,
+                                calculatedPriceGbpFromEur
+                            );
                             break;
 
                         case CardFinish.Normal:
                         default:
-                            calculatedPriceGbpFromUsd = (card.ScryfallData?.Prices.Usd ?? 0) * request.UsdToGbpRate;
-                            calculatedPriceGbpFromEur = (card.ScryfallData?.Prices.Eur ?? 0) * request.EuroToGbpRate;
-                            finalCalculatedPriceGbp = CalculateAveragePrice(calculatedPriceGbpFromUsd, calculatedPriceGbpFromEur);
+                            calculatedPriceGbpFromUsd =
+                                (card.ScryfallData?.Prices.Usd ?? 0) * request.UsdToGbpRate;
+                            calculatedPriceGbpFromEur =
+                                (card.ScryfallData?.Prices.Eur ?? 0) * request.EuroToGbpRate;
+                            finalCalculatedPriceGbp = CalculateAveragePrice(
+                                calculatedPriceGbpFromUsd,
+                                calculatedPriceGbpFromEur
+                            );
                             break;
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error calculating pricing for card {CardName}", card.OriginalCard.Name);
+                    _logger.LogError(
+                        ex,
+                        "Error calculating pricing for card {CardName}",
+                        card.OriginalCard.Name
+                    );
                     errorCount++;
                     processedCards++;
                     continue;
@@ -146,15 +178,18 @@ namespace TCGProcessor.Services
 
                 for (int i = 0; i < card.OriginalCard.Quantity; i++)
                 {
-                    pricingItems.Add(new PsPricingSheetItem
-                    {
-                        PsiCreatedBy = pricingSheet.PsCreatedBy,
-                        PsiSaleValue = finalCalculatedPriceGbp,
-                        PsiItemName = $"{card.OriginalCard.Name.ToUpper()} ({card.OriginalCard.CollectorNumber} - {card.OriginalCard.SetCode.ToUpper()}) {card.OriginalCard.Finish.ToString().ToUpper()}",
-                        PsiCashValue = finalCalculatedPriceGbp * 0.6m,
-                        PsiTradeValue = finalCalculatedPriceGbp * 0.6m,
-                        PsiPricingSheet = request.PricingSheetId,
-                    });
+                    pricingItems.Add(
+                        new PsPricingSheetItem
+                        {
+                            PsiCreatedBy = pricingSheet.PsCreatedBy,
+                            PsiSaleValue = finalCalculatedPriceGbp,
+                            PsiItemName =
+                                $"{card.OriginalCard.Name.ToUpper()} ({card.OriginalCard.CollectorNumber} - {card.OriginalCard.SetCode.ToUpper()}) {card.OriginalCard.Finish.ToString().ToUpper()}",
+                            PsiCashValue = finalCalculatedPriceGbp * 0.6m,
+                            PsiTradeValue = finalCalculatedPriceGbp * 0.6m,
+                            PsiPricingSheet = request.PricingSheetId,
+                        }
+                    );
                 }
 
                 processedCards++; // Increment processed cards after successful processing
@@ -170,11 +205,14 @@ namespace TCGProcessor.Services
 
             // Update the pricing sheet in the database
             await _pricingSheetRepository.UpdatePricingSheetAsync(pricingSheet);
-             
 
             // Log completion statistics
-            _logger.LogInformation("Pricing sheet generation completed. Processed: {ProcessedCards}, Errors: {ErrorCount}, Total Items: {TotalItems}",
-                processedCards, errorCount, pricingItems.Count);
+            _logger.LogInformation(
+                "Pricing sheet generation completed. Processed: {ProcessedCards}, Errors: {ErrorCount}, Total Items: {TotalItems}",
+                processedCards,
+                errorCount,
+                pricingItems.Count
+            );
 
             return pricingSheet;
         }
@@ -196,6 +234,7 @@ namespace TCGProcessor.Services
             }
             return 0;
         }
+
         public async Task<ValidationResult> ValidateCards(List<ManaBoxCardCsvRecord> cards)
         {
             var result = new ValidationResult { IsValid = true };

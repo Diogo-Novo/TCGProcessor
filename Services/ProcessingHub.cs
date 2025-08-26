@@ -27,29 +27,42 @@ namespace TCGProcessor.Services
                 var jobStatus = _jobTracker.GetJobStatus(jobId);
                 if (jobStatus == null)
                 {
-                    await Clients.Caller.SendAsync("Error", new { Message = $"Job {jobId} not found" });
+                    await Clients.Caller.SendAsync(
+                        "Error",
+                        new { Message = $"Job {jobId} not found" }
+                    );
                     return;
                 }
 
                 var jobGroup = $"job_{jobId}";
                 await Groups.AddToGroupAsync(Context.ConnectionId, jobGroup);
-                
-                _logger.LogInformation("Client {ConnectionId} joined job group {JobGroup}", Context.ConnectionId, jobGroup);
+
+                _logger.LogInformation(
+                    "Client {ConnectionId} joined job group {JobGroup}",
+                    Context.ConnectionId,
+                    jobGroup
+                );
 
                 // Send current job status to the newly connected client
-                await Clients.Caller.SendAsync("JobStatusUpdate", new
-                {
-                    JobId = jobId,
-                    Status = jobStatus.Status,
-                    Progress = jobStatus.Progress,
-                    Message = jobStatus.Message,
-                    Result = jobStatus.Result
-                });
+                await Clients.Caller.SendAsync(
+                    "JobStatusUpdate",
+                    new
+                    {
+                        JobId = jobId,
+                        Status = jobStatus.Status,
+                        Progress = jobStatus.Progress,
+                        Message = jobStatus.Message,
+                        Result = jobStatus.Result
+                    }
+                );
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error joining job group for job {JobId}", jobId);
-                await Clients.Caller.SendAsync("Error", new { Message = "Failed to join job tracking" });
+                await Clients.Caller.SendAsync(
+                    "Error",
+                    new { Message = "Failed to join job tracking" }
+                );
             }
         }
 
@@ -59,8 +72,12 @@ namespace TCGProcessor.Services
             {
                 var jobGroup = $"job_{jobId}";
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, jobGroup);
-                
-                _logger.LogInformation("Client {ConnectionId} left job group {JobGroup}", Context.ConnectionId, jobGroup);
+
+                _logger.LogInformation(
+                    "Client {ConnectionId} left job group {JobGroup}",
+                    Context.ConnectionId,
+                    jobGroup
+                );
             }
             catch (Exception ex)
             {
@@ -86,18 +103,24 @@ namespace TCGProcessor.Services
                     return;
                 }
 
-                await Clients.Caller.SendAsync("JobStatusUpdate", new
-                {
-                    JobId = jobId,
-                    Status = jobStatus.Status,
-                    Progress = jobStatus.Progress,
-                    Result = jobStatus.Result
-                });
+                await Clients.Caller.SendAsync(
+                    "JobStatusUpdate",
+                    new
+                    {
+                        JobId = jobId,
+                        Status = jobStatus.Status,
+                        Progress = jobStatus.Progress,
+                        Result = jobStatus.Result
+                    }
+                );
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error checking job status for job {JobId}", jobId);
-                await Clients.Caller.SendAsync("Error", new { Message = "Failed to check job status" });
+                await Clients.Caller.SendAsync(
+                    "Error",
+                    new { Message = "Failed to check job status" }
+                );
             }
         }
     }

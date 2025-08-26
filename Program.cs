@@ -21,7 +21,12 @@ builder.Services.AddSignalR();
 
 #region CORS Configuration
 var allowedOrigins =
-    builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? new[] { "*" };
+    builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? builder
+        .Configuration["Cors:AllowedOrigins"]
+        ?.Split(',', StringSplitOptions.RemoveEmptyEntries)
+    ?? new[] { "*" };
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(
@@ -32,6 +37,11 @@ builder.Services.AddCors(options =>
         }
     );
 });
+
+
+Console.WriteLine($"Environment CORS: {Environment.GetEnvironmentVariable("CORS__ALLOWED_ORIGINS")}");
+Console.WriteLine($"Config CORS: {builder.Configuration["Cors:AllowedOrigins"]}");
+Console.WriteLine($"Final origins: {string.Join(", ", allowedOrigins)}");
 #endregion
 
 #region DB Configuration

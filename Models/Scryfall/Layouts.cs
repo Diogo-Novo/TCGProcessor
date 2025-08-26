@@ -25,12 +25,26 @@ namespace Scryfall.API.Models
         Flip,
         [EnumMember(Value = "transform")]
         Transform,
+        [EnumMember(Value = "modal_dfc")]
+        ModalDfc,
         [EnumMember(Value = "meld")]
         Meld,
         [EnumMember(Value = "leveler")]
         Leveler,
+        [EnumMember(Value = "class")]
+        Class,
+        [EnumMember(Value = "case")]
+        Case,
         [EnumMember(Value = "saga")]
         Saga,
+        [EnumMember(Value = "adventure")]
+        Adventure,
+        [EnumMember(Value = "mutate")]
+        Mutate,
+        [EnumMember(Value = "prototype")]
+        Prototype,
+        [EnumMember(Value = "battle")]
+        Battle,
         [EnumMember(Value = "planar")]
         Planar,
         [EnumMember(Value = "scheme")]
@@ -46,7 +60,11 @@ namespace Scryfall.API.Models
         [EnumMember(Value = "augment")]
         Augment,
         [EnumMember(Value = "host")]
-        Host
+        Host,
+        [EnumMember(Value = "art_series")]
+        ArtSeries,
+        [EnumMember(Value = "reversible_card")]
+        ReversibleCard
     }
     internal static class LayoutsEnumExtension
     {
@@ -67,12 +85,26 @@ namespace Scryfall.API.Models
                     return "flip";
                 case Layouts.Transform:
                     return "transform";
+                case Layouts.ModalDfc:
+                    return "modal_dfc";
                 case Layouts.Meld:
                     return "meld";
                 case Layouts.Leveler:
                     return "leveler";
+                case Layouts.Class:
+                    return "class";
+                case Layouts.Case:
+                    return "case";
                 case Layouts.Saga:
                     return "saga";
+                case Layouts.Adventure:
+                    return "adventure";
+                case Layouts.Mutate:
+                    return "mutate";
+                case Layouts.Prototype:
+                    return "prototype";
+                case Layouts.Battle:
+                    return "battle";
                 case Layouts.Planar:
                     return "planar";
                 case Layouts.Scheme:
@@ -89,6 +121,10 @@ namespace Scryfall.API.Models
                     return "augment";
                 case Layouts.Host:
                     return "host";
+                case Layouts.ArtSeries:
+                    return "art_series";
+                case Layouts.ReversibleCard:
+                    return "reversible_card";
             }
             return null;
         }
@@ -105,12 +141,26 @@ namespace Scryfall.API.Models
                     return Layouts.Flip;
                 case "transform":
                     return Layouts.Transform;
+                case "modal_dfc":
+                    return Layouts.ModalDfc;
                 case "meld":
                     return Layouts.Meld;
                 case "leveler":
                     return Layouts.Leveler;
+                case "class":
+                    return Layouts.Class;
+                case "case":
+                    return Layouts.Case;
                 case "saga":
                     return Layouts.Saga;
+                case "adventure":
+                    return Layouts.Adventure;
+                case "mutate":
+                    return Layouts.Mutate;
+                case "prototype":
+                    return Layouts.Prototype;
+                case "battle":
+                    return Layouts.Battle;
                 case "planar":
                     return Layouts.Planar;
                 case "scheme":
@@ -127,6 +177,10 @@ namespace Scryfall.API.Models
                     return Layouts.Augment;
                 case "host":
                     return Layouts.Host;
+                case "art_series":
+                    return Layouts.ArtSeries;
+                case "reversible_card":
+                    return Layouts.ReversibleCard;
             }
             return null;
         }

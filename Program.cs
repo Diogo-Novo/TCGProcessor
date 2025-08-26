@@ -5,9 +5,17 @@ using Microsoft.OpenApi.Models;
 using TCGProcessor.Services;
 using TCGProcessor.Interfaces;
 using TCGProcessor.Repositories;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 
@@ -51,13 +59,14 @@ builder.Services.AddDbContext<OSMGXProcessorDbContext>(options =>
 builder.Services.AddMemoryCache();
 
 // Register HttpClient for enhanced Scryfall service
-builder.Services.AddHttpClient<IScryfallService, ScryfallService>();
-
+builder.Services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+builder.Services.AddHostedService<ManaBoxProcessingService>();
 // Register our services
 builder.Services.AddScoped<IJsonProcessingService, JsonProcessingService>();
 builder.Services.AddScoped<PricingSheetRepository>();
 builder.Services.AddScoped<CacheRepository>();
 builder.Services.AddSingleton<IJobTracker, JobTrackerService>();
+builder.Services.AddScoped<IScryfallService, ScryfallService>();
 #endregion
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -89,7 +98,7 @@ app.UseCors("CustomCors");
 // Configure the HTTP request pipeline.
 if (
     app.Environment.IsDevelopment()
-    || app.Environment.IsProduction()
+    // || app.Environment.IsProduction()
     )
 {
     app.MapOpenApi();

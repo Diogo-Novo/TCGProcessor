@@ -20,28 +20,23 @@ builder.Services.AddControllers();
 builder.Services.AddSignalR();
 
 #region CORS Configuration
-var allowedOrigins =
-    builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-    ?? builder
-        .Configuration["Cors:AllowedOrigins"]
-        ?.Split(',', StringSplitOptions.RemoveEmptyEntries)
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() 
+    ?? builder.Configuration["Cors:AllowedOrigins"]?.Split(',', StringSplitOptions.RemoveEmptyEntries)
     ?? new[] { "*" };
+
+// Clean up origins (remove trailing slashes and whitespace)
+allowedOrigins = allowedOrigins.Select(origin => origin.Trim().TrimEnd('/')).ToArray();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(
-        "CustomCors",
-        policy =>
-        {
-            policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
-        }
-    );
+    options.AddPolicy("CustomCors", policy =>
+    {
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
 });
-
-
-Console.WriteLine($"Environment CORS: {Environment.GetEnvironmentVariable("CORS__ALLOWED_ORIGINS")}");
-Console.WriteLine($"Config CORS: {builder.Configuration["Cors:AllowedOrigins"]}");
-Console.WriteLine($"Final origins: {string.Join(", ", allowedOrigins)}");
 #endregion
 
 #region DB Configuration

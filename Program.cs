@@ -17,7 +17,12 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 builder.Services.AddControllers();
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    options.ClientTimeoutInterval = TimeSpan.FromMinutes(10); // Default is 30 seconds
+    options.KeepAliveInterval = TimeSpan.FromMinutes(2); // Default is 15 seconds
+    options.HandshakeTimeout = TimeSpan.FromMinutes(2); // Default is 15 seconds
+});
 
 #region CORS Configuration
 var corsOrigins = Environment.GetEnvironmentVariable("CORS__ALLOWED_ORIGINS") 

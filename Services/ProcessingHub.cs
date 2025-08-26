@@ -23,49 +23,47 @@ namespace TCGProcessor.Services
         {
             try
             {
-                // Validate that the job exists
                 var jobStatus = _jobTracker.GetJobStatus(jobId);
                 if (jobStatus == null)
                 {
-                    await Clients.Caller.SendAsync(
-                        "Error",
-                        new { Message = $"Job {jobId} not found" }
-                    );
+                    _logger.LogWarning("Client tried to join non-existent job {JobId}", jobId);
+                    await Clients.Caller.SendAsync("Error", new { Message = $"Job {jobId} not found" });
                     return;
                 }
 
                 var jobGroup = $"job_{jobId}";
                 await Groups.AddToGroupAsync(Context.ConnectionId, jobGroup);
 
-                _logger.LogInformation(
-                    "Client {ConnectionId} joined job group {JobGroup}",
-                    Context.ConnectionId,
-                    jobGroup
-                );
+                _logger.LogInformation("Client {ConnectionId} joined job group {JobGroup} for job {JobId}",
+                    Context.ConnectionId, jobGroup, jobId);
 
-                // Send current job status to the newly connected client
-                await Clients.Caller.SendAsync(
-                    "JobStatusUpdate",
-                    new
-                    {
-                        JobId = jobId,
-                        Status = jobStatus.Status,
-                        Progress = jobStatus.Progress,
-                        Message = jobStatus.Message,
-                        Result = jobStatus.Result
-                    }
-                );
+                // Send current job status immediately
+                await Clients.Caller.SendAsync("JobStatusUpdate", new
+                {
+                    JobId = jobId,
+                    Status = jobStatus.Status,
+                    Progress = jobStatus.Progress,
+                    Message = jobStatus.Status,
+                    StartTime = jobStatus.StartTime,
+                    LastUpdate = DateTime.UtcNow
+                });
+
+                _logger.LogInformation("Sent initial status to client {ConnectionId} for job {JobId}",
+                    Context.ConnectionId, jobId);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error joining job group for job {JobId}", jobId);
-                await Clients.Caller.SendAsync(
-                    "Error",
-                    new { Message = "Failed to join job tracking" }
-                );
+                await Clients.Caller.SendAsync("Error", new { Message = "Failed to join job tracking" });
             }
         }
 
+        public override async Task OnDisconnectedAsync(Exception exception)
+        {
+            _logger.LogInformation("Client {ConnectionId} disconnected. Exception: {Exception}",
+                Context.ConnectionId, exception?.Message);
+            await base.OnDisconnectedAsync(exception);
+        }
         public async Task LeaveJobGroup(string jobId)
         {
             try
@@ -83,12 +81,6 @@ namespace TCGProcessor.Services
             {
                 _logger.LogError(ex, "Error leaving job group for job {JobId}", jobId);
             }
-        }
-
-        public override async Task OnDisconnectedAsync(Exception exception)
-        {
-            _logger.LogInformation("Client {ConnectionId} disconnected", Context.ConnectionId);
-            await base.OnDisconnectedAsync(exception);
         }
 
         // Optional: Allow clients to check if a job is still being processed

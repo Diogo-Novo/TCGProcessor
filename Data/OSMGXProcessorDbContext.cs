@@ -29,7 +29,11 @@ namespace TCGProcessor.Data
             {
                 // Configure primary key (Guid)
                 entity.HasKey(e => e.Id);
+                 entity.HasIndex(e => e.ScryfallId)
+              .IsUnique(); // Assuming one cache entry per Scryfall ID
 
+        entity.Property(e => e.ScryfallId)
+              .IsRequired();
                 // Configure CardData to be stored as JSON string
                 entity.Property(e => e.CardData)
                     .HasConversion(

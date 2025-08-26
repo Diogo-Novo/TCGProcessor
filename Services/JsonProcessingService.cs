@@ -166,10 +166,11 @@ namespace TCGProcessor.Services
             pricingSheet.PsTotalCashValue = pricingItems.Sum(i => i.PsiCashValue);
             pricingSheet.PsTotalTradeValue = pricingItems.Sum(i => i.PsiTradeValue);
             pricingSheet.PsLastUpdated = DateTime.UtcNow;
-
+            pricingSheet.PsPricingSheetItems = pricingItems;
 
             // Update the pricing sheet in the database
             await _pricingSheetRepository.UpdatePricingSheetAsync(pricingSheet);
+             
 
             // Log completion statistics
             _logger.LogInformation("Pricing sheet generation completed. Processed: {ProcessedCards}, Errors: {ErrorCount}, Total Items: {TotalItems}",

@@ -23,16 +23,23 @@ namespace TCGProcessor.Controllers
         private readonly IJsonProcessingService _processingService;
         private readonly ILogger<ProcessorController> _logger;
         private readonly IHubContext<ProcessingHub> _hubContext;
+        private readonly IBackgroundTaskQueue _taskQueue;
         private PricingSheetRepository _pricingSystemRepository;
         #endregion
         public ProcessorController(
             ILogger<ProcessorController> logger,
             IJobTracker jobTracker,
-            PricingSheetRepository pricingSystemRepository)
+            IJsonProcessingService processingService,
+            IHubContext<ProcessingHub> hubContext,
+            PricingSheetRepository pricingSystemRepository,
+            IBackgroundTaskQueue taskQueue)
         {
             _logger = logger;
             _jobTracker = jobTracker;
             _pricingSystemRepository = pricingSystemRepository;
+            _processingService = processingService;
+            _hubContext = hubContext;
+            _taskQueue = taskQueue;
         }
 
         [HttpGet("pricing")]
@@ -84,8 +91,7 @@ namespace TCGProcessor.Controllers
                 _jobTracker.StartJob(jobId);
 
                 // Start background processing
-                _ = Task.Run(() => ProcessManaBoxCardsAsync(processingRequest));
-
+                _taskQueue.QueueJob(processingRequest);
                 _logger.LogInformation("Started processing job {JobId} for user {UserId} with {CardCount} cards",
                     jobId, request.Cards.Count);
 

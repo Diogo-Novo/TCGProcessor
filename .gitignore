@@ -13,6 +13,8 @@
 [Bb]in/
 [Oo]bj/
 
+[Ll]ogs/
+
 # User-specific files
 *.userprefs
 

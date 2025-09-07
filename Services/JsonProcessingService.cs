@@ -42,7 +42,7 @@ namespace TCGProcessor.Services
             {
                 try
                 {
-                    var scryfallData = await _scryfallService.GetCardById(card.ScryfallId);
+                    var scryfallData = await _scryfallService.GetCardByIdAsync(card.ScryfallId);
 
                     enrichedCards.Add(
                         new EnrichedMTGCard { OriginalCard = card, ScryfallData = scryfallData }
@@ -224,15 +224,15 @@ namespace TCGProcessor.Services
         {
             if (usdPrice > 0 && eurPrice > 0)
             {
-                return (usdPrice + eurPrice) / 2;
-            }
-            else if (usdPrice > 0)
-            {
-                return usdPrice;
+                return Math.Max(usdPrice, eurPrice);
             }
             else if (eurPrice > 0)
             {
                 return eurPrice;
+            }
+            else if (usdPrice > 0)
+            {
+                return usdPrice;
             }
             return 0;
         }

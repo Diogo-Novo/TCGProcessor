@@ -29,8 +29,9 @@ namespace Scryfall.API.Models
         /// 'premium_deck', 'duel_deck', 'commander', 'planechase',
         /// 'conspiracy', 'archenemy', 'vanguard', 'funny', 'starter', 'box',
         /// 'promo', 'token', 'memorabilia', 'treasure_chest'</param>
-        public Set(string code = default(string), string mtgoCode = default(string), string name = default(string), SetTypes? setType = default(SetTypes?), System.DateTime? releasedAt = default(System.DateTime?), string blockCode = default(string), string block = default(string), string parentSetCode = default(string), int? cardCount = default(int?), bool? digital = default(bool?), bool? foil = default(bool?), string iconSvgUri = default(string), string searchUri = default(string))
+        public Set(Guid id = default(Guid), string code = default(string), string mtgoCode = default(string), string name = default(string), SetTypes? setType = default(SetTypes?), System.DateTime? releasedAt = default(System.DateTime?), string blockCode = default(string), string block = default(string), string parentSetCode = default(string), int? cardCount = default(int?), bool? digital = default(bool?), bool? foil = default(bool?), string iconSvgUri = default(string), string searchUri = default(string))
         {
+            Id = id;
             Code = code;
             MtgoCode = mtgoCode;
             Name = name;
@@ -51,6 +52,12 @@ namespace Scryfall.API.Models
         /// An initialization method that performs custom operations like setting defaults
         /// </summary>
         partial void CustomInit();
+
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "id")]
+        public Guid Id { get; set; }
 
         /// <summary>
         /// </summary>

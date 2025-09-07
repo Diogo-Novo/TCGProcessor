@@ -15,7 +15,8 @@ namespace TCGProcessor.Data
         public OSMGXProcessorDbContext(DbContextOptions<OSMGXProcessorDbContext> options)
             : base(options) { }
 
-        public virtual DbSet<CachedScryfallCard> ScryfallCache { get; set; }
+        public virtual DbSet<CachedScryfallCard> ScryfallCardCache { get; set; }
+        public virtual DbSet<CachedScryfallSet> ScryfallSetCache { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -64,6 +65,57 @@ namespace TCGProcessor.Data
 
                 // Add index on CachedAt for cache expiration queries
                 entity.HasIndex(e => e.CachedAt);
+
+                // Add index on IsFound for filtering queries
+                entity.HasIndex(e => e.IsFound);
+            });
+
+            modelBuilder.Entity<CachedScryfallSet>(entity =>
+            {
+                // Configure primary key (Guid)
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.ScryfallId).IsUnique(); // Assuming one cache entry per Scryfall ID
+
+                entity.Property(e => e.ScryfallId).IsRequired();
+                // Configure CardData to be stored as JSON string
+                entity
+                    .Property(e => e.SetData)
+                    .HasConversion(
+                        v =>
+                            v == null
+                                ? null
+                                : System.Text.Json.JsonSerializer.Serialize(
+                                    v,
+                                    (System.Text.Json.JsonSerializerOptions)null
+                                ),
+                        v =>
+                            v == null
+                                ? null
+                                : System.Text.Json.JsonSerializer.Deserialize<Set>(
+                                    v,
+                                    (System.Text.Json.JsonSerializerOptions)null
+                                )
+                    )
+                    .HasColumnType("JSON"); // MySQL JSON column type
+
+                // Configure CachedAt property
+                entity
+                    .Property(e => e.CachedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                    .HasColumnType("TIMESTAMP");
+
+                // Configure IsFound property
+                entity.Property(e => e.IsFound).IsRequired().HasDefaultValue(false);
+
+                // Configure Error property (nullable string)
+                entity.Property(e => e.Error).HasMaxLength(1000); // Adjust length as needed
+
+                // Add index on CachedAt for cache expiration queries
+                entity.HasIndex(e => e.CachedAt);
+
+                entity.HasIndex(e => e.SetCode).IsUnique();
+                entity.Property(e => e.SetCode).IsRequired();
 
                 // Add index on IsFound for filtering queries
                 entity.HasIndex(e => e.IsFound);

@@ -87,6 +87,7 @@ builder.Services.AddHostedService<ManaBoxProcessingService>();
 // Register our services
 builder.Services.AddScoped<IJsonProcessingService, JsonProcessingService>();
 builder.Services.AddScoped<PricingSheetRepository>();
+builder.Services.AddScoped<TCGManagerRepository>();
 builder.Services.AddScoped<CacheRepository>();
 builder.Services.AddSingleton<IJobTracker, JobTrackerService>();
 builder.Services.AddScoped<IScryfallService, ScryfallService>();

@@ -8,6 +8,6 @@ namespace TCGProcessor.Interfaces
 {
     public interface IScryfallService
     {
-        Task<Card> GetCardById(string scryfallId);
+        Task<Card> GetCardByIdAsync(string scryfallId);
     }
 }

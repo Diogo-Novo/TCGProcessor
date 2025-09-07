@@ -23,7 +23,7 @@ namespace TCGProcessor.Repositories
         public async Task<(bool found, Card? card)> GetCachedCardAsync(Guid cardId)
         {
             var cachedCard = await _context
-                .ScryfallCache.AsNoTracking()
+                .ScryfallCardCache.AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == cardId);
 
             if (cachedCard == null || cachedCard.IsExpired())
@@ -57,7 +57,7 @@ namespace TCGProcessor.Repositories
                 Error = error
             };
 
-            _context.ScryfallCache.Update(cachedCard);
+            _context.ScryfallCardCache.Update(cachedCard);
             await _context.SaveChangesAsync();
         }
     }
